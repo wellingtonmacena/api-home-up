@@ -1,45 +1,32 @@
-const connection = require('../config/connection')
+const connection = require("../config/connection");
 
 module.exports = {
+  async byFuncionario(req, res) {
+    const { idFuncionario } = req.params;
 
-    async create(req, res) {
+    const maquinas = await connection("maquina")
+      .select("*")
+      .where("fkFuncionario", Number(idFuncionario));
 
-        const {totalCpu,totalRam, totalHd, fkFuncionario} = req.body;
-        try {
-            const response = await connection('maquina')
-                .insert({
+    const idsMaquinas = maquinas.map(function (maquina) {
+      const { idMaquina } = maquina;
 
-                    totalCpu,
-                    totalRam,
-                    totalHd,
-                    fkFuncionario  
-                })
+      return idMaquina;
+    });
 
-            return res.json({message: "Registro inserido com sucesso"})
-        }
-        catch(error){
-            return res.json({message: "Ocorreu um erro: "+ error})
-        }        
-    },
+    return res.json(idsMaquinas);
+  },
 
-    async index(req, res) {
+  async show(req, res) {
+    const { idsMaquinas } = req.params;
+    const ids = idsMaquinas.split(";");
 
-        const response = await connection('maquina')
-        .select('*')
+    const maquinas = await connection("maquina").select("*");
 
-        return res.json(response)
-    },
+    const response = maquinas.filter((maquina) => {
+      return ids.includes(maquina.idMaquina + "");
+    });
 
-    async show(req, res) {
-
-        const { idMaquina} = req.params
-
-        const response = await connection('maquina')
-            .select('*')
-            .where({
-                idMaquina
-            })
-
-        return res.json(response)
-    }
-}
+    return res.json(response);
+  },
+};
