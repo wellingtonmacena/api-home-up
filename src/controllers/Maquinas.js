@@ -1,30 +1,37 @@
 const connection = require("../config/connection");
 
 module.exports = {
-  async byFuncionario(req, res) {
-    const { idFuncionario } = req.params;
+  async index(req, res) {
+    const { fkGestor } = req.params;
 
-    const maquinas = await connection("maquina")
+    const maquinas = await connection("maquina").select("*");
+    const funcionarios = await connection("funcionario")
       .select("*")
-      .where("fkFuncionario", Number(idFuncionario));
+      .where("fkGestor", fkGestor);
 
-    const idsMaquinas = maquinas.map(function (maquina) {
-      const { idMaquina } = maquina;
-
-      return idMaquina;
+    const maquinasFiltradas = maquinas.filter((maquina) => {
+      return funcionarios.find(
+        (funcionario) => funcionario.idFuncionario === maquina.fkFuncionario
+      );
     });
 
-    return res.json(idsMaquinas);
+    const response = maquinasFiltradas.map((maquina) => {
+      const { fkFuncionario, ...resto } = maquina;
+      const { nomeFuncionario } = funcionarios.find(
+        (funcionario) => funcionario.idFuncionario === fkFuncionario
+      );
+
+      return { ...resto, nomeFuncionario };
+    });
+
+    return res.json(response);
   },
 
   async show(req, res) {
-    const { idsMaquinas } = req.params;
-    const ids = idsMaquinas.split(";");
+    const { idMaquina } = req.params;
 
-    const maquinas = await connection("maquina").select("*");
-
-    const response = maquinas.filter((maquina) => {
-      return ids.includes(maquina.idMaquina + "");
+    const response = await connection("maquina").select("*").where({
+      idMaquina,
     });
 
     return res.json(response);
