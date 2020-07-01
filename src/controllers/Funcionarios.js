@@ -7,21 +7,21 @@ module.exports = {
       cpfFuncionario,
       cargo,
       salario,
+      expediente,
       emailFuncionario,
       senhaFuncionario,
       fkGestor,
-      expediente
     } = req.body;
     try {
-      const response = await connection("funcionario").insert({
+      await connection("funcionario").insert({
         nomeFuncionario,
         cpfFuncionario,
         cargo,
         salario,
+        expediente,
         emailFuncionario,
         senhaFuncionario,
         fkGestor,
-        expediente
       });
 
       return res.json({ message: "Registro inserido com sucesso" });
@@ -33,19 +33,31 @@ module.exports = {
   async index(req, res) {
     const { fkGestor } = req.params;
 
-    const response = await connection("funcionario")
+    const funcionarios = await connection("funcionario")
       .select("*")
       .where("fkGestor", fkGestor);
+
+    const response = funcionarios.map((funcionario) => {
+      const {
+        cpfFuncionario,
+        senhaFuncionario,
+        fkGestor,
+        salario,
+        ...resto
+      } = funcionario;
+
+      return { ...resto };
+    });
 
     return res.json(response);
   },
 
   async show(req, res) {
     const { idFuncionario } = req.params;
-
     const response = await connection("funcionario")
       .select("*")
-      .where("idFuncionario", idFuncionario);
+      .where("idFuncionario", idFuncionario)
+      .first();
 
     return res.json(response);
   },

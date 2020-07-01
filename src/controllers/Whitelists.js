@@ -52,7 +52,6 @@ module.exports = {
 
   async delete(req, res) {
     const { aplicacao, fkFuncionario } = req.body;
-    console.log(req.body);
 
     try {
       const response = await connection("whitelist")

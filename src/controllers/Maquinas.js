@@ -1,39 +1,52 @@
 const connection = require("../config/connection");
 
 module.exports = {
-  async index(req, res) {
-    const { fkGestor } = req.params;
+  async byFuncionario(req, res) {
+    const { idFuncionario } = req.params;
 
-    const maquinas = await connection("maquina").select("*");
-    const funcionarios = await connection("funcionario")
+    const maquinas = await connection("maquina")
       .select("*")
-      .where("fkGestor", fkGestor);
+      .where("fkFuncionario", Number(idFuncionario));
 
-    const maquinasFiltradas = maquinas.filter((maquina) => {
-      return funcionarios.find(
-        (funcionario) => funcionario.idFuncionario === maquina.fkFuncionario
-      );
+    const idsMaquinas = maquinas.map(function (maquina) {
+      const { idMaquina } = maquina;
+
+      return idMaquina;
     });
 
-    const response = maquinasFiltradas.map((maquina) => {
-      const { fkFuncionario, ...resto } = maquina;
-      const { nomeFuncionario } = funcionarios.find(
-        (funcionario) => funcionario.idFuncionario === fkFuncionario
-      );
+    return res.json(idsMaquinas);
+  },
 
-      return { ...resto, nomeFuncionario };
+  async show(req, res) {
+    const { idsMaquinas } = req.params;
+    const ids = idsMaquinas.split(";");
+
+    const maquinas = await connection("maquina").select("*");
+
+    const response = maquinas.filter((maquina) => {
+      return ids.includes(maquina.idMaquina + "");
     });
 
     return res.json(response);
   },
 
-  async show(req, res) {
-    const { idMaquina } = req.params;
+  async countMaquinas(req, res) {
+    const { fkGestor } = req.params;
 
-    const response = await connection("maquina").select("*").where({
-      idMaquina,
-    });
+    const funcionarios = await connection("funcionario")
+      .select("*")
+      .where("fkGestor", fkGestor);
 
-    return res.json(response);
+    const idsFuncionarios = funcionarios.map(
+      ({ idFuncionario }) => idFuncionario
+    );
+
+    const maquinas = await connection("maquina").select("*");
+
+    const maquinasFiltradas = maquinas.filter(({ fkFuncionario }) =>
+      idsFuncionarios.includes(fkFuncionario)
+    );
+
+    return res.json({ qtdMaquinas: maquinasFiltradas.length });
   },
 };
